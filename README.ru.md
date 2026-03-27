@@ -105,10 +105,6 @@ VITE_TONCENTER_STREAM_TOKEN_PARAM=api_key
 Обратная совместимость:
 - `VITE_TON_TESTNET_API_KEY` и `VITE_TONCENTER_STREAM_TOKEN` всё ещё поддерживаются как fallback, но предпочтительно использовать только `VITE_TONCENTER_API_KEY`.
 
-Важно по безопасности:
-- Не коммитьте реальные ключи в git.
-- Если ключ уже засвечен публично, отзовите/перевыпустите его в TON Center.
-
 ## FSD-структура
 
 ```text

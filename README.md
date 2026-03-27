@@ -70,16 +70,16 @@ npm run test
 
 Copy `.env.example` to `.env` and adjust values if needed.
 
-| Variable | Default | Description |
-|---|---|---|
-| `VITE_TON_TESTNET_ENDPOINT` | `https://testnet.toncenter.com/api/v2/jsonRPC` | Main TON testnet JSON-RPC endpoint |
-| `VITE_TONCENTER_API_KEY` | empty | Unified TON Center API key for RPC and WebSocket streaming |
-| `VITE_TON_TESTNET_FALLBACK_ENDPOINTS` | empty | Comma-separated fallback RPC endpoints |
-| `VITE_TON_TESTNET_WS_ENDPOINT` | `wss://testnet.toncenter.com/api/streaming/v2/ws` | TON Center streaming WebSocket endpoint |
-| `VITE_TONCENTER_STREAM_TOKEN_PARAM` | `api_key` | Query param key for token (`token` or `api_key`) |
-| `VITE_TONCENTER_STREAM_MIN_FINALITY` | `pending` | Minimum streamed finality |
-| `VITE_ENABLE_WS_STREAM` | `true` | Enable/disable websocket streaming |
-| `VITE_TON_EXPLORER_TX_BASE` | `https://testnet.tonviewer.com/transaction` | Explorer tx base URL |
+| Variable                              | Default                                           | Description                                                |
+| ------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------- |
+| `VITE_TON_TESTNET_ENDPOINT`           | `https://testnet.toncenter.com/api/v2/jsonRPC`    | Main TON testnet JSON-RPC endpoint                         |
+| `VITE_TONCENTER_API_KEY`              | empty                                             | Unified TON Center API key for RPC and WebSocket streaming |
+| `VITE_TON_TESTNET_FALLBACK_ENDPOINTS` | empty                                             | Comma-separated fallback RPC endpoints                     |
+| `VITE_TON_TESTNET_WS_ENDPOINT`        | `wss://testnet.toncenter.com/api/streaming/v2/ws` | TON Center streaming WebSocket endpoint                    |
+| `VITE_TONCENTER_STREAM_TOKEN_PARAM`   | `api_key`                                         | Query param key for token (`token` or `api_key`)           |
+| `VITE_TONCENTER_STREAM_MIN_FINALITY`  | `pending`                                         | Minimum streamed finality                                  |
+| `VITE_ENABLE_WS_STREAM`               | `true`                                            | Enable/disable websocket streaming                         |
+| `VITE_TON_EXPLORER_TX_BASE`           | `https://testnet.tonviewer.com/transaction`       | Explorer tx base URL                                       |
 
 ### Working `.env` example
 
@@ -92,6 +92,7 @@ VITE_TONCENTER_STREAM_TOKEN_PARAM=api_key
 ```
 
 Notes:
+
 - If your streaming token must be sent as `token`, set `VITE_TONCENTER_STREAM_TOKEN_PARAM=token`.
 - For fallback endpoints you can additionally set `VITE_TON_TESTNET_FALLBACK_ENDPOINTS`.
 
@@ -101,13 +102,9 @@ Notes:
 2. Sign in and create/get API key in your account/API section.
 3. Put this key into `VITE_TONCENTER_API_KEY` (used by JSON-RPC and WebSocket streaming).
 
-
 Backward compatibility:
-- `VITE_TON_TESTNET_API_KEY` and `VITE_TONCENTER_STREAM_TOKEN` are still accepted as fallback, but `VITE_TONCENTER_API_KEY` is the preferred single variable.
 
-Security note:
-- Do not commit real keys to git.
-- If a key was exposed publicly, revoke/rotate it in TON Center.
+- `VITE_TON_TESTNET_API_KEY` and `VITE_TONCENTER_STREAM_TOKEN` are still accepted as fallback, but `VITE_TONCENTER_API_KEY` is the preferred single variable.
 
 ## FSD Structure
 
@@ -162,48 +159,53 @@ Detailed notes: [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)
 ### Trade-offs and why they were accepted (evaluation item #4)
 
 - Mnemonic in localStorage.
-Reason: frontend-only MVP and zero backend requirement.
-Risk: not secure against local machine compromise.
-Mitigation direction: encrypt with passphrase (planned P0).
+  Reason: frontend-only MVP and zero backend requirement.
+  Risk: not secure against local machine compromise.
+  Mitigation direction: encrypt with passphrase (planned P0).
 
 - Static fee estimate (`ESTIMATED_FEE_TON`) instead of simulation.
-Reason: faster UX and lower implementation complexity.
-Risk: fee precision is approximate.
-Mitigation direction: add simulation/estimation endpoint logic (future improvement).
+  Reason: faster UX and lower implementation complexity.
+  Risk: fee precision is approximate.
+  Mitigation direction: add simulation/estimation endpoint logic (future improvement).
 
 - Optimistic pending transaction item before final hash resolution.
-Reason: TON testnet/indexer latency can be noticeable; immediate user feedback is required.
-Risk: short-lived mismatch between local pending state and final chain state.
-Mitigation: reconciliation logic and retries to replace pending with confirmed tx hash.
+  Reason: TON testnet/indexer latency can be noticeable; immediate user feedback is required.
+  Risk: short-lived mismatch between local pending state and final chain state.
+  Mitigation: reconciliation logic and retries to replace pending with confirmed tx hash.
 
 - WebSocket realtime + fallback polling only on WS degradation.
-Reason: balances responsiveness with network efficiency.
-Risk: dependency on third-party stream uptime.
-Mitigation: reconnect strategy, keepalive, and automatic polling fallback.
+  Reason: balances responsiveness with network efficiency.
+  Risk: dependency on third-party stream uptime.
+  Mitigation: reconnect strategy, keepalive, and automatic polling fallback.
 
 - Client-side anti-substitution checks (no server-side risk engine).
-Reason: no-backend scope and deterministic local UX checks.
-Risk: heuristics are limited vs advanced anti-fraud systems.
-Mitigation direction: stronger similarity detection and trusted contacts model.
+  Reason: no-backend scope and deterministic local UX checks.
+  Risk: heuristics are limited vs advanced anti-fraud systems.
+  Mitigation direction: stronger similarity detection and trusted contacts model.
 
 ## Security UX / Address-substitution Protection
 
 Implemented in send flow:
 
 1. Canonical address normalization and comparison.
+
 - Input addresses are normalized into canonical forms (raw/bounceable/non-bounceable/url-safe).
 - Equality checks are done via canonical raw representation.
 
 2. Warning for new recipient.
+
 - If destination is absent in local known recipients/history, user gets a warning.
 
 3. Warning for similar address.
+
 - App flags addresses that share canonical prefix/suffix but differ in the middle.
 
 4. Explicit risky-send confirmation.
+
 - Risk warnings require manual checkbox confirmation before submit.
 
 5. Additional confirmation for large transfers.
+
 - For amount `>= 20 TON`, user must type last 4 chars of recipient address.
 
 ## Tests
@@ -211,23 +213,27 @@ Implemented in send flow:
 Current suite: **4 test files / 13 tests**.
 
 1. `src/entities/wallet/lib/address.test.ts`
+
 - `normalizeTonAddress` returns canonical forms.
 - `areSameTonAddress` compares raw and friendly forms correctly.
 - `isValidTonAddress` accepts valid and rejects invalid address strings.
 - `isSimilarTonAddress` detects look-alike addresses.
 
 2. `src/features/send-ton/model/validation.test.ts`
+
 - Required fields validation.
 - Invalid recipient format rejection.
 - `amount + estimated fee <= balance` check.
 - Returns normalized recipient for valid payload.
 
 3. `src/features/send-ton/model/risk-checks.test.ts`
+
 - Flags brand-new recipient as risky.
 - Keeps known small transfer non-risky.
 - Flags similar + large transfer and requires additional confirmation.
 
 4. `src/entities/transaction/lib/transaction-mapper.test.ts`
+
 - Resolves hash when raw transaction hash is function-based.
 - Correctly maps ext-in wallet signed transaction with outbound value as outgoing tx.
 
@@ -247,5 +253,3 @@ Current suite: **4 test files / 13 tests**.
 4. P1: QR code generation/scanning for receive/send.
 5. P2: Add Playwright e2e smoke tests for onboarding/send/receive.
 6. P2: Add Jetton support and richer transaction filters/pagination.
-
-
