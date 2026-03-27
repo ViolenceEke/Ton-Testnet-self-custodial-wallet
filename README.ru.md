@@ -70,16 +70,16 @@ npm run test
 
 Скопируйте `.env.example` в `.env` и при необходимости измените значения.
 
-| Переменная | Значение по умолчанию | Описание |
-|---|---|---|
-| `VITE_TON_TESTNET_ENDPOINT` | `https://testnet.toncenter.com/api/v2/jsonRPC` | Основной TON testnet JSON-RPC endpoint |
-| `VITE_TONCENTER_API_KEY` | пусто | Единый TON Center API-ключ для RPC и WebSocket streaming |
-| `VITE_TON_TESTNET_FALLBACK_ENDPOINTS` | пусто | Запасные RPC endpoint'ы через запятую |
-| `VITE_TON_TESTNET_WS_ENDPOINT` | `wss://testnet.toncenter.com/api/streaming/v2/ws` | WebSocket endpoint TON Center streaming |
-| `VITE_TONCENTER_STREAM_TOKEN_PARAM` | `api_key` | Имя query-параметра для токена (`token` или `api_key`) |
-| `VITE_TONCENTER_STREAM_MIN_FINALITY` | `pending` | Минимальная finality в стриме |
-| `VITE_ENABLE_WS_STREAM` | `true` | Включение/выключение websocket-стрима |
-| `VITE_TON_EXPLORER_TX_BASE` | `https://testnet.tonviewer.com/transaction` | Базовый URL обозревателя транзакций |
+| Переменная                            | Значение по умолчанию                             | Описание                                                 |
+| ------------------------------------- | ------------------------------------------------- | -------------------------------------------------------- |
+| `VITE_TON_TESTNET_ENDPOINT`           | `https://testnet.toncenter.com/api/v2/jsonRPC`    | Основной TON testnet JSON-RPC endpoint                   |
+| `VITE_TONCENTER_API_KEY`              | пусто                                             | Единый TON Center API-ключ для RPC и WebSocket streaming |
+| `VITE_TON_TESTNET_FALLBACK_ENDPOINTS` | пусто                                             | Запасные RPC endpoint'ы через запятую                    |
+| `VITE_TON_TESTNET_WS_ENDPOINT`        | `wss://testnet.toncenter.com/api/streaming/v2/ws` | WebSocket endpoint TON Center streaming                  |
+| `VITE_TONCENTER_STREAM_TOKEN_PARAM`   | `api_key`                                         | Имя query-параметра для токена (`token` или `api_key`)   |
+| `VITE_TONCENTER_STREAM_MIN_FINALITY`  | `pending`                                         | Минимальная finality в стриме                            |
+| `VITE_ENABLE_WS_STREAM`               | `true`                                            | Включение/выключение websocket-стрима                    |
+| `VITE_TON_EXPLORER_TX_BASE`           | `https://testnet.tonviewer.com/transaction`       | Базовый URL обозревателя транзакций                      |
 
 ### Рабочий пример `.env`
 
@@ -92,17 +92,18 @@ VITE_TONCENTER_STREAM_TOKEN_PARAM=api_key
 ```
 
 Примечания:
+
 - Если ваш streaming-токен должен передаваться как `token`, используйте `VITE_TONCENTER_STREAM_TOKEN_PARAM=token`.
 - Для failover RPC можно дополнительно задать `VITE_TON_TESTNET_FALLBACK_ENDPOINTS`.
 
 ### Где взять ключи
 
-1. Откройте сайт TON Center: `https://toncenter.com/`.
-2. Войдите в аккаунт и создайте/получите API-ключ в разделе API.
+1. Откройте сайт TON Center: `https://testnet.toncenter.com/`.
+2. Перейдите в телеграм бота, который там указан(@toncenter).
 3. Укажите этот ключ в `VITE_TONCENTER_API_KEY` (он используется и для JSON-RPC, и для WebSocket streaming).
 
-
 Обратная совместимость:
+
 - `VITE_TON_TESTNET_API_KEY` и `VITE_TONCENTER_STREAM_TOKEN` всё ещё поддерживаются как fallback, но предпочтительно использовать только `VITE_TONCENTER_API_KEY`.
 
 ## FSD-структура
@@ -158,48 +159,53 @@ src/
 ### Компромиссы и почему они приняты (критерий #4)
 
 - Хранение mnemonic в localStorage.
-Причина: frontend-only MVP и требование zero-backend.
-Риск: небезопасно при компрометации локальной машины.
-План снижения риска: шифрование с passphrase (P0).
+  Причина: frontend-only MVP и требование zero-backend.
+  Риск: небезопасно при компрометации локальной машины.
+  План снижения риска: шифрование с passphrase (P0).
 
 - Статическая оценка комиссии (`ESTIMATED_FEE_TON`) вместо симуляции.
-Причина: меньше сложность и быстрее UX.
-Риск: оценка комиссии приближенная.
-План: добавить более точную симуляцию/оценку (future improvement).
+  Причина: меньше сложность и быстрее UX.
+  Риск: оценка комиссии приближенная.
+  План: добавить более точную симуляцию/оценку (future improvement).
 
 - Optimistic pending до резолва финального hash.
-Причина: на testnet бывают задержки индексации, нужен мгновенный UX feedback.
-Риск: кратковременное расхождение локального статуса и on-chain факта.
-Снижение: reconciliation/retry логика для замены pending на confirmed hash.
+  Причина: на testnet бывают задержки индексации, нужен мгновенный UX feedback.
+  Риск: кратковременное расхождение локального статуса и on-chain факта.
+  Снижение: reconciliation/retry логика для замены pending на confirmed hash.
 
 - Realtime через WebSocket + polling только при деградации WS.
-Причина: баланс между отзывчивостью и сетевой нагрузкой.
-Риск: зависимость от доступности стороннего стрима.
-Снижение: reconnect, keepalive и fallback polling.
+  Причина: баланс между отзывчивостью и сетевой нагрузкой.
+  Риск: зависимость от доступности стороннего стрима.
+  Снижение: reconnect, keepalive и fallback polling.
 
 - Только client-side anti-substitution проверки (без server-side risk engine).
-Причина: no-backend scope.
-Риск: эвристики ограничены по сравнению с полноценной антифрод-системой.
-План: усиленные similarity-алгоритмы и trusted contacts.
+  Причина: no-backend scope.
+  Риск: эвристики ограничены по сравнению с полноценной антифрод-системой.
+  План: усиленные similarity-алгоритмы и trusted contacts.
 
 ## Security UX / Защита от address-substitution
 
 Реализовано в send flow:
 
 1. Каноническая нормализация и сравнение адресов.
+
 - Адрес приводится к canonical format (raw/bounceable/non-bounceable/url-safe).
 - Сравнение выполняется по canonical raw.
 
 2. Warning на новый адрес.
+
 - Если получатель не встречался в локальной истории/known recipients, показывается предупреждение.
 
 3. Warning на похожий адрес.
+
 - Адрес помечается как рискованный, если совпадают canonical prefix/suffix, а середина отличается.
 
 4. Явное подтверждение рискованной отправки.
+
 - При risk warnings отправка блокируется, пока пользователь не поставит чекбокс подтверждения.
 
 5. Дополнительное подтверждение крупного перевода.
+
 - Для суммы `>= 20 TON` нужно ввести последние 4 символа адреса получателя.
 
 ## Тесты
@@ -207,23 +213,27 @@ src/
 Текущий набор: **4 test files / 13 тестов**.
 
 1. `src/entities/wallet/lib/address.test.ts`
+
 - `normalizeTonAddress` возвращает канонические формы адреса.
 - `areSameTonAddress` корректно сравнивает raw и friendly представления.
 - `isValidTonAddress` принимает валидные и отклоняет невалидные адреса.
 - `isSimilarTonAddress` определяет похожие адреса.
 
 2. `src/features/send-ton/model/validation.test.ts`
+
 - Проверка обязательности полей.
 - Отклонение некорректного формата адреса.
 - Проверка `amount + estimated fee <= balance`.
 - Для валидных данных возвращается нормализованный адрес получателя.
 
 3. `src/features/send-ton/model/risk-checks.test.ts`
+
 - Новый получатель помечается как risky.
 - Известный получатель и небольшая сумма не помечаются как risky.
 - Похожий адрес + крупная сумма требуют дополнительных подтверждений.
 
 4. `src/entities/transaction/lib/transaction-mapper.test.ts`
+
 - Корректное извлечение hash, когда hash приходит как функция.
 - Корректный маппинг ext-in signed transaction с исходящим value как исходящей транзакции.
 
@@ -243,5 +253,3 @@ src/
 4. P1: QR generation/scanning для receive/send.
 5. P2: Добавить Playwright e2e smoke для onboarding/send/receive.
 6. P2: Добавить Jetton support и более богатые фильтры/пагинацию истории.
-
-
