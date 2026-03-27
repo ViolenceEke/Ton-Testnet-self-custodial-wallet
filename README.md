@@ -100,7 +100,8 @@ Notes:
 
 1. Open TON Center website: `https://testnet.toncenter.com/`.
 2. Go to the Telegram bot listed there(@toncenter).
-3. Put this key into `VITE_TONCENTER_API_KEY` (used by JSON-RPC and WebSocket streaming).
+3. Make a key in the bot.
+4. Put this key into `VITE_TONCENTER_API_KEY` (used by JSON-RPC and WebSocket streaming).
 
 Backward compatibility:
 
