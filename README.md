@@ -140,23 +140,6 @@ src/
 
 Detailed notes: [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)
 
-### Why this architecture (evaluation item #5)
-
-1. FSD layering (`app/pages/widgets/features/entities/shared`) separates route composition, domain logic, and reusable primitives.
-2. Wallet and transaction domain logic is isolated in `entities/*`, so UI changes do not affect protocol-level logic.
-3. Send/receive/search actions are in `features/*`, making critical user flows testable without page-level coupling.
-4. Store + adapters live close to domain (`entities/wallet`), which keeps TON integration centralized and easier to reason about.
-5. No backend is used by design to satisfy the assignment constraints and keep deploy complexity minimal.
-
-### Why this stack (evaluation item #5)
-
-- React + TypeScript: predictable component model + strict typing for wallet, transaction, and validation paths.
-- Vite: fast local iteration and lightweight build setup for MVP delivery speed.
-- Zustand (+ persist): minimal boilerplate state management with straightforward per-wallet local persistence.
-- `@ton/ton` + `@ton/crypto`: native TON toolchain for mnemonic/address derivation, transaction fetch, and transfer submit.
-- TON Center RPC + Streaming WS: practical way to implement blockchain reads + realtime updates without a custom backend.
-- Vitest: low-friction unit tests integrated with Vite/TS stack.
-
 ### Trade-offs and why they were accepted (evaluation item #4)
 
 - Mnemonic in localStorage.
@@ -183,6 +166,23 @@ Detailed notes: [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)
   Reason: no-backend scope and deterministic local UX checks.
   Risk: heuristics are limited vs advanced anti-fraud systems.
   Mitigation direction: stronger similarity detection and trusted contacts model.
+
+### Why this architecture (evaluation item #5)
+
+1. FSD layering (`app/pages/widgets/features/entities/shared`) separates route composition, domain logic, and reusable primitives.
+2. Wallet and transaction domain logic is isolated in `entities/*`, so UI changes do not affect protocol-level logic.
+3. Send/receive/search actions are in `features/*`, making critical user flows testable without page-level coupling.
+4. Store + adapters live close to domain (`entities/wallet`), which keeps TON integration centralized and easier to reason about.
+5. No backend is used by design to satisfy the assignment constraints and keep deploy complexity minimal.
+
+### Why this stack (evaluation item #5)
+
+- React + TypeScript: predictable component model + strict typing for wallet, transaction, and validation paths.
+- Vite: fast local iteration and lightweight build setup for MVP delivery speed.
+- Zustand (+ persist): minimal boilerplate state management with straightforward per-wallet local persistence.
+- `@ton/ton` + `@ton/crypto`: native TON toolchain for mnemonic/address derivation, transaction fetch, and transfer submit.
+- TON Center RPC + Streaming WS: practical way to implement blockchain reads + realtime updates without a custom backend.
+- Vitest: low-friction unit tests integrated with Vite/TS stack.
 
 ## Security UX / Address-substitution Protection
 
