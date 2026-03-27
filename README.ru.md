@@ -142,11 +142,49 @@ src/
 
 Подробно: [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)
 
-Текущие инженерные компромиссы:
+### Почему такая архитектура (критерий #5)
 
-- Mnemonic хранится локально для MVP-удобства (не production-grade security).
-- Комиссия оценивается приближенно (`ESTIMATED_FEE_TON`), без полной симуляции.
-- Realtime зависит от доступности внешнего стрима; при дисконнектах включается fallback polling.
+1. FSD-слои (`app/pages/widgets/features/entities/shared`) разделяют роутинг/композицию, доменную логику и переиспользуемые примитивы.
+2. Логика кошелька и транзакций изолирована в `entities/*`, поэтому UI-изменения не ломают протокольную часть.
+3. Критичные пользовательские сценарии (send/receive/search) вынесены в `features/*`, что упрощает тестирование и поддержку.
+4. Store и TON-адаптеры находятся рядом с доменом (`entities/wallet`), интеграция с сетью централизована и прозрачна.
+5. Отказ от backend сделан осознанно: это прямое требование задачи и сокращение operational overhead.
+
+### Почему выбран этот стек (критерий #5)
+
+- React + TypeScript: предсказуемая компонентная модель + строгая типизация для wallet/tx/validation путей.
+- Vite: быстрый цикл разработки и простой build-pipeline для MVP.
+- Zustand (+ persist): минимум boilerplate, локальная персистентность по кошелькам без лишней сложности.
+- `@ton/ton` + `@ton/crypto`: нативный TON toolchain для key derivation, чтения транзакций и отправки transfer.
+- TON Center RPC + Streaming WS: практичный способ получить on-chain данные и realtime без собственного backend.
+- Vitest: легковесные unit-тесты в том же TS/Vite контуре.
+
+### Компромиссы и почему они приняты (критерий #4)
+
+- Хранение mnemonic в localStorage.
+Причина: frontend-only MVP и требование zero-backend.
+Риск: небезопасно при компрометации локальной машины.
+План снижения риска: шифрование с passphrase (P0).
+
+- Статическая оценка комиссии (`ESTIMATED_FEE_TON`) вместо симуляции.
+Причина: меньше сложность и быстрее UX.
+Риск: оценка комиссии приближенная.
+План: добавить более точную симуляцию/оценку (future improvement).
+
+- Optimistic pending до резолва финального hash.
+Причина: на testnet бывают задержки индексации, нужен мгновенный UX feedback.
+Риск: кратковременное расхождение локального статуса и on-chain факта.
+Снижение: reconciliation/retry логика для замены pending на confirmed hash.
+
+- Realtime через WebSocket + polling только при деградации WS.
+Причина: баланс между отзывчивостью и сетевой нагрузкой.
+Риск: зависимость от доступности стороннего стрима.
+Снижение: reconnect, keepalive и fallback polling.
+
+- Только client-side anti-substitution проверки (без server-side risk engine).
+Причина: no-backend scope.
+Риск: эвристики ограничены по сравнению с полноценной антифрод-системой.
+План: усиленные similarity-алгоритмы и trusted contacts.
 
 ## Security UX / Защита от address-substitution
 
@@ -209,4 +247,5 @@ src/
 4. P1: QR generation/scanning для receive/send.
 5. P2: Добавить Playwright e2e smoke для onboarding/send/receive.
 6. P2: Добавить Jetton support и более богатые фильтры/пагинацию истории.
+
 

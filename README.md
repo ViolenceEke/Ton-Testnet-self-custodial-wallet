@@ -142,11 +142,49 @@ src/
 
 Detailed notes: [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)
 
-Current pragmatic trade-offs:
+### Why this architecture (evaluation item #5)
 
-- Mnemonic is persisted locally for MVP convenience (not production-grade secure storage).
-- Fee is estimated (`ESTIMATED_FEE_TON`) instead of full simulation.
-- Realtime depends on third-party stream availability; fallback polling handles disconnect periods.
+1. FSD layering (`app/pages/widgets/features/entities/shared`) separates route composition, domain logic, and reusable primitives.
+2. Wallet and transaction domain logic is isolated in `entities/*`, so UI changes do not affect protocol-level logic.
+3. Send/receive/search actions are in `features/*`, making critical user flows testable without page-level coupling.
+4. Store + adapters live close to domain (`entities/wallet`), which keeps TON integration centralized and easier to reason about.
+5. No backend is used by design to satisfy the assignment constraints and keep deploy complexity minimal.
+
+### Why this stack (evaluation item #5)
+
+- React + TypeScript: predictable component model + strict typing for wallet, transaction, and validation paths.
+- Vite: fast local iteration and lightweight build setup for MVP delivery speed.
+- Zustand (+ persist): minimal boilerplate state management with straightforward per-wallet local persistence.
+- `@ton/ton` + `@ton/crypto`: native TON toolchain for mnemonic/address derivation, transaction fetch, and transfer submit.
+- TON Center RPC + Streaming WS: practical way to implement blockchain reads + realtime updates without a custom backend.
+- Vitest: low-friction unit tests integrated with Vite/TS stack.
+
+### Trade-offs and why they were accepted (evaluation item #4)
+
+- Mnemonic in localStorage.
+Reason: frontend-only MVP and zero backend requirement.
+Risk: not secure against local machine compromise.
+Mitigation direction: encrypt with passphrase (planned P0).
+
+- Static fee estimate (`ESTIMATED_FEE_TON`) instead of simulation.
+Reason: faster UX and lower implementation complexity.
+Risk: fee precision is approximate.
+Mitigation direction: add simulation/estimation endpoint logic (future improvement).
+
+- Optimistic pending transaction item before final hash resolution.
+Reason: TON testnet/indexer latency can be noticeable; immediate user feedback is required.
+Risk: short-lived mismatch between local pending state and final chain state.
+Mitigation: reconciliation logic and retries to replace pending with confirmed tx hash.
+
+- WebSocket realtime + fallback polling only on WS degradation.
+Reason: balances responsiveness with network efficiency.
+Risk: dependency on third-party stream uptime.
+Mitigation: reconnect strategy, keepalive, and automatic polling fallback.
+
+- Client-side anti-substitution checks (no server-side risk engine).
+Reason: no-backend scope and deterministic local UX checks.
+Risk: heuristics are limited vs advanced anti-fraud systems.
+Mitigation direction: stronger similarity detection and trusted contacts model.
 
 ## Security UX / Address-substitution Protection
 
@@ -209,4 +247,5 @@ Current suite: **4 test files / 13 tests**.
 4. P1: QR code generation/scanning for receive/send.
 5. P2: Add Playwright e2e smoke tests for onboarding/send/receive.
 6. P2: Add Jetton support and richer transaction filters/pagination.
+
 
